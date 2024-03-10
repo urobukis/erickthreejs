@@ -1,7 +1,7 @@
 import * as THREE from 'three';
 
-import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls'
-import {  OBJLoader } from 'three/examples/jsm/loaders/OBJLoader'  
+import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js'
+import {  OBJLoader } from 'three/examples/jsm/loaders/OBJLoader.js'  
 
 
 const scene = new THREE.Scene();
@@ -9,6 +9,10 @@ const camera = new THREE.PerspectiveCamera( 75, window.innerWidth / window.inner
 scene.background= new THREE.Color(0xcdcdcd)
 
 camera.position.z = 5;
+
+var mouse = new THREE.Vector2();
+var intersects = new THREE.Vector3();
+
 
 //plano
 
@@ -62,7 +66,7 @@ const loader = new OBJLoader();
 
 
 function animate() {
-	dragObject()
+
 	requestAnimationFrame( animate );
 
 	//cube.rotation.x += 0.01;
@@ -79,7 +83,13 @@ var draggable= THREE.Object3D;
 
 
 function selectObjet(event){
+	
+    if(draggable){
 
+		console.log(`objeto`)
+		draggable= null
+		return;
+	}
 
 	clickMouse.x = ( event.clientX / window.innerWidth ) * 2 - 1;
 	clickMouse.y = - ( event.clientY / window.innerHeight ) * 2 + 1;
@@ -95,11 +105,7 @@ function selectObjet(event){
 	}
 
 			
-	if(draggable){
-		console.log(`objeto ${draggable.userData}`)
-		draggable= null as any
-		return;
-	}
+
 
 	}
 
@@ -107,32 +113,52 @@ window.addEventListener("click", selectObjet, false)
 
 
 
-window.addEventListener('mousemove', event=>{
+window.addEventListener('click', event=>{
 	moveMouse.x = ( event.clientX / window.innerWidth ) * 2 - 1;
-	moveMouse.y = - ( event.clientY / window.innerHeight ) * 2 + 1;
+	moveMouse.z = - ( event.clientY / window.innerHeight ) * 2 + 1;
+	const pos=[moveMouse.x, moveMouse.y]
+	console.log(`el puntero se movio hacia ${pos}`)
 
-	//const pos=[moveMouse.x, moveMouse.y]
-	//console.log(`el puntero se movio hacia ${pos}`)
 	
 })
 
-window.addEventListener("click", (event)=>{})
-	function dragObject(){
 
-		if (draggable !=null){
-			raycaster.setFromCamera(moveMouse, camera)
-			const found= raycaster.intersectObjects( scene.children );
-			if (found.length>0){
-				for(let o of found){
-					if(!o.object.userData.ground)
-					continue
-					draggable.position.x= o.point.x
-					draggable.position.z= o.point.z
+/*
 
-				}
-			}
-		}
-	}
+function dragObject(){
+    
+    if (draggable !=null){
+        raycaster.setFromCamera(moveMouse, camera)
+        const found= raycaster.intersectObjects( scene.children );
+        if (found.length>0){
+            for(let o of found){
+                if(o.userData.ground)  
+                continue
+                
+                draggable.clientX= o.point.x
+                draggable.clientY= o.point.z
+
+            }
+        }
+    }
+}
+
+*/
+
+/*
+function dragObject(event){ 
+
+    mouse.x = ( event.clientX / window.innerWidth ) * 2 - 1;
+	mouse.y = - ( event.clientY / window.innerHeight ) * 2 + 1;
+    raycaster.setFromCamera(mouse, camera);
+    raycaster.ray.intersectPlane(plane, intersects);
+    mesh.position.set(intersects.x, intersects.y, intersects.z);
+  
+}
+* */
+
+
+	
 	/*
 	
 		nota importante para hacer que las paredes sean invisibles al enfocar se usar el mismo ray caster para ello
