@@ -2,7 +2,7 @@ import * as THREE from 'three';
 
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js'
 import {  OBJLoader } from 'three/examples/jsm/loaders/OBJLoader.js'  
-
+import {DragControls} from 'three/examples/jsm/controls/DragControls.js'
 
 const scene = new THREE.Scene();
 const camera = new THREE.PerspectiveCamera( 75, window.innerWidth / window.innerHeight, 0.1, 1000 );
@@ -16,7 +16,30 @@ var intersects = new THREE.Vector3();
 
 //plano
 
-function cubeBlue(){
+
+const segundoCubo= new THREE.BoxGeometry(1,1,1)
+const materialCubo=new THREE.MeshBasicMaterial({color:0x4169e1})
+const segundoC= new THREE.Mesh(segundoCubo, materialCubo)
+const posC1={x:1.2, y:0, z:0}
+scene.add( segundoC )
+segundoC.position.set(posC1.x, posC1.y, posC1.z)
+segundoC.userData.draggable= true;
+segundoC.userData.name="bluebox"
+
+const geometry = new THREE.BoxGeometry( 1, 1, 1 );
+const material = new THREE.MeshBasicMaterial( { color: 0x00ff00 } );
+const cube = new THREE.Mesh( geometry, material );
+scene.add( cube );
+cube.userData.draggable= true;
+cube.userData.name="greebox"
+
+var objects=[cube, segundoC]
+
+/** 
+ * 
+ * 
+ * 
+ * function cubeBlue(){
 	//cubo 1
 	const segundoCubo= new THREE.BoxGeometry(1,1,1)
 	const materialCubo=new THREE.MeshBasicMaterial({color:0x4169e1})
@@ -38,6 +61,8 @@ function cubeGreen(){
 	cube.userData.draggable= true;
 	cube.userData.name="greebox"
 }
+*/
+
 
 
 function plane () {
@@ -56,9 +81,10 @@ const renderer = new THREE.WebGLRenderer();
 renderer.setSize( window.innerWidth, window.innerHeight );
 document.body.appendChild( renderer.domElement );
 
+const dcontrol= new DragControls( objects, camera, renderer.domElement );
 
-
-
+dcontrol.activate();
+dcontrol.activate();
 
 
 const controls = new OrbitControls( camera, renderer.domElement );
@@ -122,7 +148,13 @@ window.addEventListener('click', event=>{
 	
 })
 
-
+function dragObject(){
+	raycaster.setFromCamera(moveMouse, camera)
+	intersects=raycaster.intersectObject(plane.children)
+    if(draggable){
+		
+	}
+}
 /*
 
 function dragObject(){

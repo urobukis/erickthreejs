@@ -1,150 +1,198 @@
-import * as THREE from 'three';
-
+import * as THREE from 'three'
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls'
-import {  OBJLoader } from 'three/examples/jsm/loaders/OBJLoader'  
+import { OBJLoader } from 'three/examples/jsm/loaders/OBJLoader';
 
+// CAMERA
+const camera: THREE.PerspectiveCamera = new THREE.PerspectiveCamera(30, window.innerWidth / window.innerHeight, 1, 1500);
+camera.position.set(-35, 70, 100);
+camera.lookAt(new THREE.Vector3(0, 0, 0));
 
-const scene = new THREE.Scene();
-const camera = new THREE.PerspectiveCamera( 75, window.innerWidth / window.innerHeight, 0.1, 1000 );
-scene.background= new THREE.Color(0xcdcdcd)
+// RENDERER
+const renderer: THREE.WebGLRenderer = new THREE.WebGLRenderer({ antialias: true });
+renderer.setPixelRatio(window.devicePixelRatio);
+renderer.setSize(window.innerWidth, window.innerHeight);
+renderer.shadowMap.enabled = true;
+document.body.appendChild(renderer.domElement);
 
-camera.position.z = 5;
+// WINDOW RESIZE HANDLING
+export function onWindowResize() {
+  camera.aspect = window.innerWidth / window.innerHeight;
+  camera.updateProjectionMatrix();
+  renderer.setSize(window.innerWidth, window.innerHeight);
+}
+window.addEventListener('resize', onWindowResize);
 
-//plano
+// SCENE
+const scene: THREE.Scene = new THREE.Scene()
+scene.background = new THREE.Color(0xbfd1e5);
 
-function cubeBlue(){
-	//cubo 1
-	const segundoCubo= new THREE.BoxGeometry(1,1,1)
-	const materialCubo=new THREE.MeshBasicMaterial({color:0x4169e1})
-	const segundoC= new THREE.Mesh(segundoCubo, materialCubo)
-	const posC1={x:1.2, y:0, z:0}
-	scene.add( segundoC )
-	segundoC.position.set(posC1.x, posC1.y, posC1.z)
-	segundoC.userData.draggable= true;
-	segundoC.userData.name="bluebox"
+// CONTROLS
+const controls = new OrbitControls(camera, renderer.domElement);
+
+export function animate() {
+  dragObject();
+  renderer.render(scene, camera);
+  requestAnimationFrame(animate);
 }
 
+// ambient light
+let hemiLight = new THREE.AmbientLight(0xffffff, 0.20);
+scene.add(hemiLight);
 
-function cubeGreen(){
-	//cubo 2
-	const geometry = new THREE.BoxGeometry( 1, 1, 1 );
-	const material = new THREE.MeshBasicMaterial( { color: 0x00ff00 } );
-	const cube = new THREE.Mesh( geometry, material );
-	scene.add( cube );
-	cube.userData.draggable= true;
-	cube.userData.name="greebox"
+//Add directional light
+let dirLight = new THREE.DirectionalLight(0xffffff, 1);
+dirLight.position.set(-30, 50, -30);
+scene.add(dirLight);
+dirLight.castShadow = true;
+dirLight.shadow.mapSize.width = 2048;
+dirLight.shadow.mapSize.height = 2048;
+dirLight.shadow.camera.left = -70;
+dirLight.shadow.camera.right = 70;
+dirLight.shadow.camera.top = 70;
+dirLight.shadow.camera.bottom = -70;
+
+function createFloor() {
+  let pos = { x: 0, y: -1, z: 3 };
+  let scale = { x: 100, y: 2, z: 100 };
+
+  let blockPlane = new THREE.Mesh(new THREE.BoxBufferGeometry(),
+       new THREE.MeshPhongMaterial({ color: 0xf9c834 }));
+  blockPlane.position.set(pos.x, pos.y, pos.z);
+  blockPlane.scale.set(scale.x, scale.y, scale.z);
+  blockPlane.castShadow = true;
+  blockPlane.receiveShadow = true;
+  scene.add(blockPlane);
+
+  blockPlane.userData.ground = true
 }
 
+// box
+function createBox() {
+  let scale = { x: 6, y: 6, z: 6 }
+  let pos = { x: 15, y: scale.y / 2, z: 15 }
 
-function plane () {
-	const plano= new THREE.PlaneGeometry(10,10)
-	const meshMaterial= new THREE.MeshBasicMaterial({color: 0xf9e37c, side: THREE.DoubleSide})
-	const meshPlano= new THREE.Mesh(plano, meshMaterial)
-	const posPlano={x:0,y:-0.5,z:0}
-	meshPlano.rotateX( - Math.PI / 2);
-	meshPlano.position.set(posPlano.x, posPlano.y, posPlano.z)
-	scene.add(meshPlano)
-	meshPlano.userData.ground= true;
+  let box = new THREE.Mesh(new THREE.BoxBufferGeometry(), 
+      new THREE.MeshPhongMaterial({ color: 0xDC143C }));
+  box.position.set(pos.x, pos.y, pos.z);
+  box.scale.set(scale.x, scale.y, scale.z);
+  box.castShadow = true;
+  box.receiveShadow = true;
+  scene.add(box)
+
+  box.userData.draggable = true
+  box.userData.name = 'BOX'
 }
 
+function createSphere() {
+  let radius = 4;
+  let pos = { x: 15, y: radius, z: -15 };
 
-const renderer = new THREE.WebGLRenderer();
-renderer.setSize( window.innerWidth, window.innerHeight );
-document.body.appendChild( renderer.domElement );
+  let sphere = new THREE.Mesh(new THREE.SphereBufferGeometry(radius, 32, 32), 
+      new THREE.MeshPhongMaterial({ color: 0x43a1f4 }))
+  sphere.position.set(pos.x, pos.y, pos.z)
+  sphere.castShadow = true
+  sphere.receiveShadow = true
+  scene.add(sphere)
 
-
-
-
-
-
-const controls = new OrbitControls( camera, renderer.domElement );
-const loader = new OBJLoader();
-
-
-function animate() {
-	dragObject()
-	requestAnimationFrame( animate );
-
-	//cube.rotation.x += 0.01;
-	//cube.rotation.y += 0.01;
-
-	renderer.render( scene, camera );
+  sphere.userData.draggable = true
+  sphere.userData.name = 'SPHERE'
 }
 
-const raycaster= new THREE.Raycaster();
-const clickMouse= new THREE.Vector2();
-const moveMouse= new THREE.Vector2()
-var draggable= THREE.Object3D;
+function createCylinder() {
+  let radius = 4;
+  let height = 6
+  let pos = { x: -15, y: height / 2, z: 15 };
 
+  // threejs
+  let cylinder = new THREE.Mesh(new THREE.CylinderBufferGeometry(radius, radius, height, 32), new THREE.MeshPhongMaterial({ color: 0x90ee90 }))
+  cylinder.position.set(pos.x, pos.y, pos.z)
+  cylinder.castShadow = true
+  cylinder.receiveShadow = true
+  scene.add(cylinder)
 
+  cylinder.userData.draggable = true
+  cylinder.userData.name = 'CYLINDER'
+}
 
-function selectObjet(event){
+function createCastle () {
+  const objLoader = new OBJLoader();
 
+  objLoader.loadAsync('./castle.obj').then((group) => {
+    const castle = group.children[0];
 
-	clickMouse.x = ( event.clientX / window.innerWidth ) * 2 - 1;
-	clickMouse.y = - ( event.clientY / window.innerHeight ) * 2 + 1;
-	raycaster.setFromCamera( clickMouse, camera );
-	//const position=[clickMouse.x, clickMouse.y]
+    castle.position.x = -15
+    castle.position.z = -15
 
-	//console.log("posicion",{position})
-	const found= raycaster.intersectObjects( scene.children );
+    castle.scale.x = 5;
+    castle.scale.y = 5;
+    castle.scale.z = 5;
 
-	if(found.length>0 && found[0].object.userData.draggable){
-		draggable=found[0].object
-		console.log(`found draggable ${draggable.userData.name}`)
-	}
+    castle.castShadow = true
+    castle.receiveShadow = true
 
-			
-	if(draggable){
-		console.log(`objeto ${draggable.userData}`)
-		draggable= null as any
-		return;
-	}
+    castle.userData.draggable = true
+    castle.userData.name = 'CASTLE'
 
-	}
+    scene.add(castle)
+  })
+}
 
-window.addEventListener("click", selectObjet, false)
+const raycaster = new THREE.Raycaster(); // create once
+const clickMouse = new THREE.Vector2();  // create once
+const moveMouse = new THREE.Vector2();   // create once
+var draggable: THREE.Object3D;
 
+function intersect(pos: THREE.Vector2) {
+  raycaster.setFromCamera(pos, camera);
+  return raycaster.intersectObjects(scene.children);
+}
 
+window.addEventListener('click', event => {
+  if (draggable != null) {
+    console.log(`dropping draggable ${draggable.userData.name}`)
+    draggable = null as any
+    return;
+  }
 
-window.addEventListener('mousemove', event=>{
-	moveMouse.x = ( event.clientX / window.innerWidth ) * 2 - 1;
-	moveMouse.y = - ( event.clientY / window.innerHeight ) * 2 + 1;
+  // THREE RAYCASTER
+  clickMouse.x = (event.clientX / window.innerWidth) * 2 - 1;
+  clickMouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
 
-	//const pos=[moveMouse.x, moveMouse.y]
-	//console.log(`el puntero se movio hacia ${pos}`)
-	
+  const found = intersect(clickMouse);
+  if (found.length > 0) {
+    if (found[0].object.userData.draggable) {
+      draggable = found[0].object
+      console.log(`found draggable ${draggable.userData.name}`)
+    }
+  }
 })
 
-window.addEventListener("click", (event)=>{})
-	function dragObject(){
+window.addEventListener('mousemove', event => {
+  moveMouse.x = (event.clientX / window.innerWidth) * 2 - 1;
+  moveMouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
+});
 
-		if (draggable !=null){
-			raycaster.setFromCamera(moveMouse, camera)
-			const found= raycaster.intersectObjects( scene.children );
-			if (found.length>0){
-				for(let o of found){
-					if(!o.object.userData.ground)
-					continue
-					draggable.position.x= o.point.x
-					draggable.position.z= o.point.z
+function dragObject() {
+  if (draggable != null) {
+    const found = intersect(moveMouse);
+    if (found.length > 0) {
+      for (let i = 0; i < found.length; i++) {
+        if (!found[i].object.userData.ground)
+          continue
+        
+        let target = found[i].point;
+        draggable.position.x = target.x
+        draggable.position.z = target.z
+      }
+    }
+  }
+}
 
-				}
-			}
-		}
-	}
-	/*
-	
-		nota importante para hacer que las paredes sean invisibles al enfocar se usar el mismo ray caster para ello
-		se debe crear una constante que haga un array con todos los elementos en este caso 
-			const found= raycaster.intersectObjects( scene.children );
-		 una vez creada se puede llamar a un condicinal en el cual se llame a esta constante que sera un array con todos
-		 los elementos en el plano que la camara pueda observar de la siguiente forma
-	
-		 found[0].object.userData.xxxxx
-		las xxxx se remplazan con la propiedad el objeto que uno desee, luego puede usarse para modificar las propiedades del objeto 
-	*/
-	animate();
-	plane();
-	cubeBlue();
-	cubeGreen();
+
+createFloor()
+createBox()
+createSphere()
+createCylinder()
+createCastle()
+
+animate()
