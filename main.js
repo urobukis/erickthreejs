@@ -11,10 +11,20 @@ scene.background= new THREE.Color(0xcdcdcd)
 camera.position.z = 5;
 
 var mouse = new THREE.Vector2();
-var intersects = new THREE.Vector3();
+var intersects;
+
 
 
 //plano
+
+
+
+const geometry = new THREE.BoxGeometry( 1, 1, 1 );
+const material = new THREE.MeshBasicMaterial( { color: 0x00ff00 } );
+const cube = new THREE.Mesh( geometry, material );
+scene.add( cube );
+cube.userData.draggable= true;
+cube.userData.name="greebox"
 
 
 const segundoCubo= new THREE.BoxGeometry(1,1,1)
@@ -25,47 +35,23 @@ scene.add( segundoC )
 segundoC.position.set(posC1.x, posC1.y, posC1.z)
 segundoC.userData.draggable= true;
 segundoC.userData.name="bluebox"
+var objects=[cube,segundoC]
 
-const geometry = new THREE.BoxGeometry( 1, 1, 1 );
-const material = new THREE.MeshBasicMaterial( { color: 0x00ff00 } );
-const cube = new THREE.Mesh( geometry, material );
-scene.add( cube );
-cube.userData.draggable= true;
-cube.userData.name="greebox"
-
-var objects=[cube, segundoC]
-
-/** 
- * 
- * 
- * 
- * function cubeBlue(){
-	//cubo 1
-	const segundoCubo= new THREE.BoxGeometry(1,1,1)
-	const materialCubo=new THREE.MeshBasicMaterial({color:0x4169e1})
-	const segundoC= new THREE.Mesh(segundoCubo, materialCubo)
-	const posC1={x:1.2, y:0, z:0}
-	scene.add( segundoC )
-	segundoC.position.set(posC1.x, posC1.y, posC1.z)
-	segundoC.userData.draggable= true;
-	segundoC.userData.name="bluebox"
-}
+const grid= new THREE.GridHelper(10,10)
+scene.add(grid)
+grid.position.set(0,-0.5,0)
 
 
-function cubeGreen(){
-	//cubo 2
-	const geometry = new THREE.BoxGeometry( 1, 1, 1 );
-	const material = new THREE.MeshBasicMaterial( { color: 0x00ff00 } );
-	const cube = new THREE.Mesh( geometry, material );
-	scene.add( cube );
-	cube.userData.draggable= true;
-	cube.userData.name="greebox"
-}
-*/
+const heightlightMesh= new THREE.Mesh(
+	new THREE.PlaneGeometry(1,1),
+	new THREE.MeshBasicMaterial({side:THREE.DoubleSide})
+)
+
+heightlightMesh.rotateX(Math.PI/2)
+heightlightMesh.position.set(0.5,0,0.5)
+scene.add(heightlightMesh)
 
 
-
-function plane () {
 	const plano= new THREE.PlaneGeometry(10,10)
 	const meshMaterial= new THREE.MeshBasicMaterial({color: 0xf9e37c, side: THREE.DoubleSide})
 	const meshPlano= new THREE.Mesh(plano, meshMaterial)
@@ -73,7 +59,10 @@ function plane () {
 	meshPlano.rotateX( - Math.PI / 2);
 	meshPlano.position.set(posPlano.x, posPlano.y, posPlano.z)
 	scene.add(meshPlano)
+	meshPlano.name='ground'
 	meshPlano.userData.ground= true;
+function plane () {
+
 }
 
 
@@ -81,11 +70,18 @@ const renderer = new THREE.WebGLRenderer();
 renderer.setSize( window.innerWidth, window.innerHeight );
 document.body.appendChild( renderer.domElement );
 
+
+//DCONTROLS
 const dcontrol= new DragControls( objects, camera, renderer.domElement );
 
 dcontrol.activate();
 dcontrol.activate();
 
+dcontrol.addEventListener("drag", function(event){
+	console.log("drag")
+	event.object.position.y=0;
+
+})
 
 const controls = new OrbitControls( camera, renderer.domElement );
 const loader = new OBJLoader();
@@ -108,34 +104,7 @@ var draggable= THREE.Object3D;
 
 
 
-function selectObjet(event){
-	
-    if(draggable){
 
-		console.log(`objeto`)
-		draggable= null
-		return;
-	}
-
-	clickMouse.x = ( event.clientX / window.innerWidth ) * 2 - 1;
-	clickMouse.y = - ( event.clientY / window.innerHeight ) * 2 + 1;
-	raycaster.setFromCamera( clickMouse, camera );
-	//const position=[clickMouse.x, clickMouse.y]
-
-	//console.log("posicion",{position})
-	const found= raycaster.intersectObjects( scene.children );
-
-	if(found.length>0 && found[0].object.userData.draggable){
-		draggable=found[0].object
-		console.log(`found draggable ${draggable.userData.name}`)
-	}
-
-			
-
-
-	}
-
-window.addEventListener("click", selectObjet, false)
 
 
 
@@ -148,46 +117,25 @@ window.addEventListener('click', event=>{
 	
 })
 
-function dragObject(){
+window.addEventListener("mousemove", function(e){
+	moveMouse.x = ( e.clientX / window.innerWidth ) * 2 - 1;
+	moveMouse.y = - ( e.clientY / window.innerHeight ) * 2 + 1;
+
 	raycaster.setFromCamera(moveMouse, camera)
-	intersects=raycaster.intersectObject(plane.children)
-    if(draggable){
-		
-	}
-}
-/*
 
-function dragObject(){
-    
-    if (draggable !=null){
-        raycaster.setFromCamera(moveMouse, camera)
-        const found= raycaster.intersectObjects( scene.children );
-        if (found.length>0){
-            for(let o of found){
-                if(o.userData.ground)  
-                continue
-                
-                draggable.clientX= o.point.x
-                draggable.clientY= o.point.z
 
-            }
-        }
-    }
-}
+	intersects= raycaster.intersectObjects(scene.children)	
+	intersects.forEach(function(intersect) {
+		if(intersect.object.name==="ground"){
+			console.log("j")
+			const heightlightPos= new THREE.Vector3().copy(intersect.point).floor().addScalar(0.5)
+			heightlightMesh.position.set(heightlightPos.x, -0.49, heightlightPos.z)
+		}
 
-*/
+	});
 
-/*
-function dragObject(event){ 
+})
 
-    mouse.x = ( event.clientX / window.innerWidth ) * 2 - 1;
-	mouse.y = - ( event.clientY / window.innerHeight ) * 2 + 1;
-    raycaster.setFromCamera(mouse, camera);
-    raycaster.ray.intersectPlane(plane, intersects);
-    mesh.position.set(intersects.x, intersects.y, intersects.z);
-  
-}
-* */
 
 
 	
@@ -203,6 +151,5 @@ function dragObject(event){
 		las xxxx se remplazan con la propiedad el objeto que uno desee, luego puede usarse para modificar las propiedades del objeto 
 	*/
 	animate();
-	plane();
-	cubeBlue();
-	cubeGreen();
+
+	
