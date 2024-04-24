@@ -2,7 +2,7 @@
 import * as THREE from 'three';
 import { OBJLoader, GLTFLoader } from 'three/examples/jsm/Addons.js';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js'
-import { color, modelDirection } from 'three/examples/jsm/nodes/Nodes.js';
+
 
 
 var scene = new THREE.Scene();
@@ -13,8 +13,8 @@ renderer.setSize(window.innerWidth, window.innerHeight);
 document.body.appendChild(renderer.domElement);
 
 const controls = new OrbitControls( camera, renderer.domElement );
-
-
+var light = new THREE.AmbientLight(0xffffff);
+scene.add(light);
 //constantes
 const forniture=[]
 
@@ -26,7 +26,76 @@ var relleno= new THREE.MeshBasicMaterial({color:0x00ff00})
 
 var cuadrado= new THREE.BoxGeometry(1,1,1)
 var rellenoC=new THREE.MeshBasicMaterial({color:0x00ff00})
+//elementos importados para clonar
+//nuevos elementos a incluir 
+let tag
+let bbox
+const loader=new GLTFLoader()
+let model1, model2, model3
+loader.load("./modelos/bath.glb", function(gltf){
+    const model=gltf.scene
+    model.userData.name="bath"
+    model.scale.set(0.01,0.01,0.01)
 
+
+    const bbox = new THREE.Box3().setFromObject(model);
+    const center = bbox.getCenter(new THREE.Vector3());
+    const size= bbox.getSize(new THREE.Vector3())
+ 
+    const mesh= new THREE.Mesh(new THREE.BoxGeometry(size.x,size.y, size.z), new THREE.MeshStandardMaterial({ color: 0xff0000, transparent: true, opacity: 0.0} ))
+    model.position.set(-center.x, -center.y, -center.z);
+    
+    //mesh.position.set(-center.x,-center.y, -center.z)
+    mesh.add(model)
+    //forniture.push(mesh)
+
+   // scene.add(mesh)
+   //const box = new THREE.Box3().setFromObject(model);
+   // console.log( 'Bounding box size:', box.getSize( new THREE.Vector3() ) );
+    model1=mesh
+
+
+
+})
+loader.load("./modelos/sink.glb", function(gltf){
+    const model=gltf.scene
+    model.scale.set(0.8,0.8,0.8)
+    model.userData.name="sink"
+
+    
+    const bbox = new THREE.Box3().setFromObject(model);
+    const center = bbox.getCenter(new THREE.Vector3());
+    const size= bbox.getSize(new THREE.Vector3())
+ 
+    const mesh= new THREE.Mesh(new THREE.BoxGeometry(size.x,size.y, size.z), new THREE.MeshStandardMaterial({ color: 0xff0000, transparent: true, opacity: 0.0} ))
+    model.position.set(-center.x, -center.y, -center.z);
+    
+    //mesh.position.set(-center.x,-center.y, -center.z)
+    mesh.add(model)
+   
+
+    model2=mesh
+
+})
+loader.load("./modelos/toilet.glb", function(gltf){
+    const model=gltf.scene
+    model.userData.name="toilet"
+    model.scale.set(0.5,0.5,0.5)
+    const bbox = new THREE.Box3().setFromObject(model);
+    const center = bbox.getCenter(new THREE.Vector3());
+    const size= bbox.getSize(new THREE.Vector3())
+ 
+    const mesh= new THREE.Mesh(new THREE.BoxGeometry(size.x,size.y, size.z), new THREE.MeshStandardMaterial({ color: 0xff0000, transparent: true, opacity: 0.0} ))
+    model.position.set(-center.x, -center.y, -center.z);
+    
+    //mesh.position.set(-center.x,-center.y, -center.z)
+    mesh.add(model)
+    model3=mesh
+
+})
+
+
+//fin de clonados
 //plano 
 var planeGeometry = new THREE.PlaneGeometry(10, 10);
 var planeMaterial = new THREE.MeshBasicMaterial({color: 0xcccccc, side: THREE.DoubleSide});
@@ -134,8 +203,18 @@ function onMouseClick(event) {
         var intersects = raycaster.intersectObject(plane);
 
         if (intersects.length > 0 && seleccionar) {
-            const posElemento= new THREE.Vector3().copy(intersects[0].point).floor().addScalar(0.5)
-            selected.position.set(posElemento.x, 0, posElemento.z)
+            if(tag===model1){
+                const posElemento= new THREE.Vector3().copy(intersects[0].point).floor().addScalar(0.5)
+            selected.position.set(posElemento.x,-0.21, posElemento.z)
+            }
+            else{const posElemento= new THREE.Vector3().copy(intersects[0].point).floor().addScalar(0.5)
+                selected.position.set(posElemento.x,0, posElemento.z)}
+            
+            
+            
+           // selected.position.set(posElemento.x, 0, posElemento.z)
+
+         
 
     
             
@@ -187,7 +266,7 @@ var elaborar=false
 var objdelete=false
 
 function crearObjeto(event){
-    if(elaborar===false){
+    if(elaborar==false){
         console.log("ya se puede agregar")
         elaborar=true
         objdelete=false
@@ -216,8 +295,26 @@ function estadoDelete(event){
     }
 }
 //final de los controles
+const btn1=document.getElementById("btn-1")
+const btn2=document.getElementById("btn-2")
+const btn3=document.getElementById("btn-3")
 
 
+
+
+btn1.addEventListener("click",(e)=>{
+    tag=model1
+    console.log("se presiono 1",tag)
+
+})
+btn2.addEventListener("click", (e)=>{
+    tag=model2
+    console.log("se presiono 2",tag)
+}, false)
+btn3.addEventListener("click", (e)=>{
+    tag=model3
+    console.log("se presiono 3",tag)
+}, false)
 //agregar nuevos objetos en la pantalla
 function createObject(event){
     //
@@ -226,12 +323,34 @@ function createObject(event){
      
      if(intersects.length>0 && elaborar ){
         //esfera,relleno
-        const meshEsfera= new THREE.Mesh(cuadrado,rellenoC)
-        const objectPos= new THREE.Vector3().copy(intersects[0].point).floor().addScalar(0.5)
-        meshEsfera.position.set(objectPos.x,0,objectPos.z)
-		scene.add( meshEsfera );
+        //const meshEsfera= new THREE.Mesh(cuadrado,rellenoC)
+        //const objectPos= new THREE.Vector3().copy(intersects[0].point).floor().addScalar(0.5)
+        //meshEsfera.position.set(objectPos.x,0,objectPos.z)
+		const algoTag= tag.clone()
+        if(tag==model1){
+            const objectPos= new THREE.Vector3().copy(intersects[0].point).floor().addScalar(0.5)
+            algoTag.position.set(objectPos.x,-0.21,objectPos.z)
+            scene.add( algoTag );
+    
+            forniture.push( algoTag)
+        }
+        if (tag==model2){
+            const objectPos= new THREE.Vector3().copy(intersects[0].point).floor().addScalar(0.5)
+            algoTag.position.set(objectPos.x,0,objectPos.z)
+            scene.add( algoTag );
+    
+            forniture.push( algoTag)
 
-		forniture.push( meshEsfera)
+        }
+        if(tag==model3){const objectPos= new THREE.Vector3().copy(intersects[0].point).floor().addScalar(0.5)
+            algoTag.position.set(objectPos.x,0,objectPos.z)
+            scene.add( algoTag );
+    
+            forniture.push( algoTag)}
+     
+      
+
+
      }
 
 }
@@ -240,10 +359,11 @@ var eliminar= document.getElementById("eliminar")
 
 function eliminarObjeto(event){
     if( objdelete){
+
         var intersects = raycaster.intersectObjects(forniture);
         if (intersects.length>0){
             scene.remove( selected );
-            object.splice( forniture.indexOf( selected ), 1 );
+            //object.splice( forniture.indexOf( selected ), 1 );
         }
 
 }
